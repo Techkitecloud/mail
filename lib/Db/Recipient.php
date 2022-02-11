@@ -50,10 +50,19 @@ class Recipient extends Entity implements JsonSerializable {
 	public const TYPE_CC = 2;
 	public const TYPE_BCC = 3;
 
+	/** @var int */
 	protected $messageId;
+
+	/** @var int */
 	protected $type;
+
+	/** @var int */
 	protected $mailboxType;
+
+	/** @var string */
 	protected $label;
+
+	/** @var string */
 	protected $email;
 
 	public function __construct() {
