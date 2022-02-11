@@ -39,7 +39,7 @@ class LocalMailboxMessageTest extends TestCase {
 		$this->timeFactory = $this->createMock(ITimeFactory::class);
 	}
 
-	public function testObject(): void {
+	public function testGettersSetters(): void {
 		$time = $this->timeFactory->getTime();
 		$message = new LocalMailboxMessage();
 
