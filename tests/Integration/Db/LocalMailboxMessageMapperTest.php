@@ -50,6 +50,9 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	/** @var ITimeFactory| MockObject */
 	private $timeFactory;
 
+	/** @var LocalMailboxMessage */
+	private $entity;
+
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -79,7 +82,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$message->setInReplyToId(100);
 		$message->setDraftId(99);
 
-		$this->mapper->insert($message);
+		$this->entity = $this->mapper->insert($message);
 	}
 
 	public function testFindAllForUser(): void {
@@ -97,5 +100,16 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$this->assertEquals(100, $row['in_reply_to_id']);
 		$this->assertEquals(99, $row['draft_id']);
 		$this->assertTrue((bool)$row['html']);
+	}
+
+	/**
+	 * @depends testFindAllForUser
+	 */
+	public function testDeleteForLocalOutbox(): void {
+		$this->mapper->deleteWithRelated($this->entity);
+		$userdId = $this->getTestAccountUserId();
+		$result = $this->mapper->getAllForUser($userdId);
+		$this->assertEmpty($result);
+
 	}
 }

@@ -84,19 +84,8 @@ class LocalMailboxMessageMapper extends QBMapper {
 	}
 
 	public function getRelatedData(int $id, string $userId): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('a.*')
-			->from('mail_lcl_mbx_attchmts', 'm')
-			->join('m', 'mail_attachments', 'a', $qb->expr()->eq('m.attachment_id', 'a.id'))
-			->where(
-				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
-				$qb->expr()->eq('m.local_message_id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
-			);
-		$rows = $qb->execute();
-		$result = $rows->fetchAll();
-		$rows->closeCursor();
 		$related = [];
-		$related['attachments'] = $result;
+		$related['attachments'] = $this->attachmentMapper->findForLocalMailbox($id, $userId);
 		$related['recipients'] = $this->recipientMapper->findRecipients($id, Recipient::MAILBOX_TYPE_OUTBOX);
 		return $related;
 	}
@@ -119,8 +108,8 @@ class LocalMailboxMessageMapper extends QBMapper {
 	/**
 	 * @throws DBException
 	 */
-	public function deleteWithRelated(LocalMailboxMessage $message, string $userId): void {
-		$this->attachmentMapper->deleteForLocalMailbox($message->getId(), $userId);
+	public function deleteWithRelated(LocalMailboxMessage $message): void {
+		$this->attachmentMapper->deleteForLocalMailbox($message->getId());
 		$this->recipientMapper->deleteForLocalMailbox($message->getId());
 		$this->delete($message);
 	}
