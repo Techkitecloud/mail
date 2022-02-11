@@ -32,17 +32,10 @@ use PHPUnit\Framework\MockObject\MockObject;
 
 class RecipientTest extends TestCase {
 
-	/** @var ITimeFactory|MockObject  */
-	private $timeFactory;
+	protected function setUp(): void {}
 
-	protected function setUp(): void {
-		$this->timeFactory = $this->createMock(ITimeFactory::class);
-	}
-
-	public function testObject(): void {
-		$time = $this->timeFactory->getTime();
+	public function testGettersSetters(): void {
 		$recipient = new Recipient();
-
 		$recipient->setMessageId(1);
 		$recipient->setType(Recipient::TYPE_TO);
 		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
