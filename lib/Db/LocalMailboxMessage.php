@@ -72,7 +72,7 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 	protected $html;
 
 	/** @var int|null */
-	protected $inReplyToMessageId;
+	protected $inReplyToId;
 
 	/** @var int|null */
 	protected $draftId;
