@@ -31,7 +31,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
- * @template-extends QBMapper<Message>
+ * @template-extends QBMapper<Recipient>
  */
 class RecipientMapper extends QBMapper {
 	public function __construct(IDBConnection $db) {
@@ -40,7 +40,6 @@ class RecipientMapper extends QBMapper {
 
 	/**
 	 * @returns Recipient[]
-	 * @throws \OCP\DB\Exception
 	 */
 	public function findRecipients(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
 		$qb = $this->db->getQueryBuilder();
@@ -68,9 +67,9 @@ class RecipientMapper extends QBMapper {
 		$result->closeCursor();
 	}
 
-	public function createForLocalMailbox(int $messageId, string $label, string $email): Recipient {
+	public function createForLocalMailbox(int $messageId, int $type, string $label, string $email): Recipient {
 		$recipient = new Recipient();
-		$recipient->setType(Recipient::TYPE_TO);
+		$recipient->setType($type);
 		$recipient->setMessageId($messageId);
 		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
 		$recipient->setLabel($label);
