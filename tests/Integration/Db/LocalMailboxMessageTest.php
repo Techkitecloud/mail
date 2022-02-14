@@ -62,5 +62,7 @@ class LocalMailboxMessageTest extends TestCase {
 		$this->assertTrue($message->isHtml());
 		$this->assertEquals(100, $message->getInReplyToId());
 		$this->assertEquals(99, $message->getDraftId());
+		$this->assertNull($message->getAttachments());
+		$this->assertNull($message->getRecipients());
 	}
 }
