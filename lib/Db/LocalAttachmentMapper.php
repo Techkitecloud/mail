@@ -77,7 +77,6 @@ class LocalAttachmentMapper extends QBMapper {
 
 	/**
 	 * @throws DoesNotExistException
-	 * @return LocalAttachment
 	 */
 	public function find(string $userId, int $id): LocalAttachment {
 		$qb = $this->db->getQueryBuilder();

@@ -74,7 +74,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$rows->closeCursor();
 
 		$attachments = $this->attachmentMapper->findAllForLocalMailbox($ids, $userId);
-		$recipients = $this->recipientMapper->findAllRecipients($ids);
+		$recipients = $this->recipientMapper->findAllRecipients($ids, Recipient::MAILBOX_TYPE_OUTBOX);
 
 		return array_map(static function($entity) use ($attachments, $recipients) {
 			$entity->setAttachments(
