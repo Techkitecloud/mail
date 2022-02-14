@@ -81,14 +81,22 @@ class RecipientMapper extends QBMapper {
 		$qb->execute();
 	}
 
-	public function createForLocalMailbox(int $messageId, int $type, string $label, string $email): Recipient {
-		$recipient = new Recipient();
-		$recipient->setType($type);
-		$recipient->setMessageId($messageId);
-		$recipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
-		$recipient->setLabel($label);
-		$recipient->setEmail($email);
-		$this->insert($recipient);
-		return $recipient;
+	public function saveRecipients(int $messageId, array $recipients,int $type, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->insert($this->getTableName());
+		$qb->createParameter('type');
+		$qb->createParameter('message_id');
+		$qb->createParameter('mailbox_type');
+		$qb->createParameter('label');
+		$qb->createParameter('email');
+
+		foreach ($recipients as $recipient){
+			$qb->setParameter('type', $type, IQueryBuilder::PARAM_INT);
+			$qb->setParameter('message_id', $messageId, IQueryBuilder::PARAM_INT);
+			$qb->setParameter('mailbox_type', $mailboxType, IQueryBuilder::PARAM_INT);
+			$qb->setParameter('label', $recipient['label'] ?? $recipient['email'], IQueryBuilder::PARAM_STR);
+			$qb->setParameter('email', $recipient['email'], IQueryBuilder::PARAM_STR);
+			$qb->execute();
+		}
 	}
 }

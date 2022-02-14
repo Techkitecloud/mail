@@ -114,18 +114,13 @@ class LocalMailboxMessageMapper extends QBMapper {
 
 	public function saveWithRelatedData(LocalMailboxMessage $message, array $to, array $cc, array $bcc, array $attachmentIds = []): void {
 		$this->insert($message);
-		// i hate this
-		array_map(function ($recipient) use ($message) {
-			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_TO, $recipient['label'] ?? $recipient['email'], $recipient['email']);
-		}, $to);
-		array_map(function ($recipient) use ($message) {
-			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_CC, $recipient['label'] ?? $recipient['email'], $recipient['email']);
-		}, $cc);
-		array_map(function ($recipient) use ($message) {
-			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_BCC, $recipient['label'] ?? $recipient['email'], $recipient['email']);
-		}, $bcc);
+		$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
 	}
+
+
 
 	public function deleteWithRelated(LocalMailboxMessage $message): void {
 		$this->attachmentMapper->deleteForLocalMailbox($message->getId());

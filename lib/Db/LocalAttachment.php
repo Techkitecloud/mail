@@ -32,7 +32,7 @@ use OCP\AppFramework\Db\Entity;
  * @method void setFileName(string $fileName)
  * @method string getMimeType()
  * @method void setMimeType(string $mimeType)
- * @method int getCreatedAt()
+ * @method int|null getCreatedAt()
  * @method void setCreatedAt(int $createdAt)
  */
 class LocalAttachment extends Entity implements JsonSerializable {
@@ -46,7 +46,7 @@ class LocalAttachment extends Entity implements JsonSerializable {
 	/** @var string */
 	protected $mimeType;
 
-	/** @var int */
+	/** @var int|null */
 	protected $createdAt;
 
 	public function jsonSerialize() {

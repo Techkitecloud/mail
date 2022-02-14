@@ -168,9 +168,13 @@ class RecipientMapperTest extends TestCase {
 	/**
 	 * @depends testDeleteForLocalMailbox
 	 */
-	public function testCreateForLocalMailbox(): void {
-		$entity = $this->mapper->createForLocalMailbox(1, Recipient::TYPE_FROM, 'Penny', 'penny@stardewvalleylibrary.edu');
-		$this->assertIsInt($entity->getId());
+	public function testSaveRecipients(): void {
+		$this->mapper->saveRecipients(3, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM, Recipient::MAILBOX_TYPE_OUTBOX);
+
+		$results = $this->mapper->findRecipients(3, Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->assertCount(1, $results);
+
+		$entity = $results[0];
 		$this->assertEquals(1, $entity->getMessageId());
 		$this->assertEquals(Recipient::TYPE_FROM, $entity->getType());
 		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $entity->getMailboxType());

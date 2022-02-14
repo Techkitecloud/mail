@@ -29,6 +29,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Throwable;
 
 /**
  * @template-extends QBMapper<LocalAttachment>
@@ -106,42 +107,52 @@ class LocalAttachmentMapper extends QBMapper {
 	}
 
 	public function deleteForLocalMailbox(int $localMessageId): void {
-		// make this a sub query
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('attachment_id')
-			->from('mail_lcl_mbx_attchmts')
-			->where($qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
+		$this->db->beginTransaction();
+		try {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('attachment_id')
+				->from('mail_lcl_mbx_attchmts')
+				->where($qb->expr()->eq('local_message_id', $qb->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
 
-		$qb1 = $this->db->getQueryBuilder();
-		$qb1->delete($this->getTableName())
-			->where($qb1->expr()->in('id', $qb1->createFunction($qb->getSQL()), IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY);
-		$result = $qb1->execute();
-		$result->closeCursor();
+			$qb1 = $this->db->getQueryBuilder();
+			$qb1->delete($this->getTableName())
+				->where($qb1->expr()->in('id', $qb1->createFunction($qb->getSQL()), IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY);
+			$qb1->execute();
 
-		$qb2 = $this->db->getQueryBuilder();
-		$qb2->delete('mail_lcl_mbx_attchmts')
-			->where($qb2->expr()->eq('local_message_id', $qb2->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
-		$result = $qb2->execute();
-		$result->closeCursor();
+			$qb2 = $this->db->getQueryBuilder();
+			$qb2->delete('mail_lcl_mbx_attchmts')
+				->where($qb2->expr()->eq('local_message_id', $qb2->createNamedParameter($localMessageId), IQueryBuilder::PARAM_INT));
+			$qb2->execute();
+		} catch (Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 	}
 
 	public function createLocalMailboxAttachment(int $localMessageId, string $userId, string $fileName, string $mimetype): void {
-		$qb = $this->db->getQueryBuilder();
-		$qb->insert($this->getTableName())
-			->setValue('user_id', $qb->createNamedParameter($userId))
-			->setValue('created_at', $qb->createNamedParameter($this->timeFactory->getTime()))
-			->setValue('file_name', $qb->createNamedParameter($fileName))
-			->setValue('mime_type', $qb->createNamedParameter($mimetype));
-		$result = $qb->execute();
-		$attachmentId = $qb->getLastInsertId();
-		$result->closeCursor();
+		$this->db->beginTransaction();
 
-		$qb2 = $this->db->getQueryBuilder();
-		$qb2->insert('mail_lcl_mbx_attchmts')
-			->setValue('local_message_id', $qb2->createNamedParameter($localMessageId))
-			->setValue('attachment_id', $qb2->createNamedParameter($attachmentId));
-		$result = $qb2->execute();
-		$result->closeCursor();
+		try {
+			$qb = $this->db->getQueryBuilder();
+			$qb->insert($this->getTableName())
+				->setValue('user_id', $qb->createNamedParameter($userId))
+				->setValue('created_at', $qb->createNamedParameter($this->timeFactory->getTime()))
+				->setValue('file_name', $qb->createNamedParameter($fileName))
+				->setValue('mime_type', $qb->createNamedParameter($mimetype));
+			$result = $qb->execute();
+			$attachmentId = $qb->getLastInsertId();
+			$result->closeCursor();
+
+			$qb2 = $this->db->getQueryBuilder();
+			$qb2->insert('mail_lcl_mbx_attchmts')
+				->setValue('local_message_id', $qb2->createNamedParameter($localMessageId))
+				->setValue('attachment_id', $qb2->createNamedParameter($attachmentId));
+			$result = $qb2->execute();
+			$result->closeCursor();
+		} catch (Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 	}
 
 	public function linkAttachmentToMessage(int $messageId, array $attachmentIds): void {
