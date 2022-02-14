@@ -46,9 +46,9 @@ class LocalAttachmentMapper extends QBMapper {
 	}
 
 	/**
-	 * @throws Exception
+	 * @return LocalAttachment[]
 	 */
-	public function findForLocalMailbox(int $localMessageId, string $userId): array {
+	public function findForLocalMailboxMessage(int $localMessageId, string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('a.*')
 			->from('mail_lcl_mbx_attchmts', 'm')
@@ -57,6 +57,18 @@ class LocalAttachmentMapper extends QBMapper {
 				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
 				$qb->expr()->eq('m.local_message_id', $qb->createNamedParameter($localMessageId, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
+		return $this->findEntities($qb);
+	}
+
+	public function findAllForLocalMailbox(array $localMessageIds, string $userId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('a.*', 'm.local_message_id')
+			->from('mail_lcl_mbx_attchmts', 'm')
+			->join('m', 'mail_attachments', 'a', $qb->expr()->eq('m.attachment_id', 'a.id'))
+			->where(
+				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
+				$qb->expr()->in('m.local_message_id', $qb->createNamedParameter($localMessageIds, IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY)
+			);
 		$rows = $qb->execute();
 		$result = $rows->fetchAll();
 		$rows->closeCursor();
@@ -64,8 +76,7 @@ class LocalAttachmentMapper extends QBMapper {
 	}
 
 	/**
-	 * @throws DoesNotExistException|Exception|MultipleObjectsReturnedException
-	 *
+	 * @throws DoesNotExistException
 	 * @return LocalAttachment
 	 */
 	public function find(string $userId, int $id): LocalAttachment {
@@ -95,9 +106,6 @@ class LocalAttachmentMapper extends QBMapper {
 		return $rows;
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	public function deleteForLocalMailbox(int $localMessageId): void {
 		// make this a sub query
 		$qb = $this->db->getQueryBuilder();
@@ -118,9 +126,6 @@ class LocalAttachmentMapper extends QBMapper {
 		$result->closeCursor();
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	public function createLocalMailboxAttachment(int $localMessageId, string $userId, string $fileName, string $mimetype): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert($this->getTableName())
@@ -140,15 +145,17 @@ class LocalAttachmentMapper extends QBMapper {
 		$result->closeCursor();
 	}
 
-	/**
-	 * @throws Exception
-	 */
-	public function linkAttachmentToMessage(int $messageId, int $attachmentId): void {
+	public function linkAttachmentToMessage(int $messageId, array $attachmentIds): void {
 		$qb = $this->db->getQueryBuilder();
+
 		$qb->insert('mail_lcl_mbx_attchmts')
-			->setValue('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT))
-			->setValue('attachment_id', $qb->createNamedParameter($attachmentId, IQueryBuilder::PARAM_INT));
-		$result = $qb->execute();
-		$result->closeCursor();
+			->setValue('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT));
+		$qb->setValue('attachment_id', $qb->createParameter('attachmentId'));
+
+		array_map(static function ($attachmentId) use ($qb) {
+			$qb->setParameter('attachmentId', $attachmentId);
+			$result = $qb->execute();
+			$result->closeCursor();
+		}, $attachmentIds);
 	}
 }

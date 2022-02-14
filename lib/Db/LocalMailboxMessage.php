@@ -77,6 +77,12 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 	/** @var int|null */
 	protected $draftId;
 
+	/** @var array|null */
+	protected $attachments;
+
+	/** @var array|null */
+	protected $recipients;
+
 	public const OUTGOING = 0;
 	public const DRAFT = 1;
 
@@ -106,7 +112,39 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 			'text' => $this->getBody(),
 			'html' => ($this->isHtml() === true),
 			'inReplyToId' => $this->getInReplyToId(),
-			'draftId' => $this->getDraftId()
+			'draftId' => $this->getDraftId(),
+			'attachments' => $this->getAttachments(),
+			'recipients' => $this->getRecipients()
 		];
+	}
+
+	/**
+	 * @param LocalAttachment[] $attachments
+	 * @return void
+	 */
+	public function setAttachments(array $attachments): void {
+		$this->attachments = $attachments;
+	}
+
+	/**
+	 * @return LocalAttachment[]|null
+	 */
+	public function getAttachments(): ?array {
+		return $this->attachments;
+	}
+
+	/**
+	 * @param Recipient[] $recipients
+	 * @return void
+	 */
+	public function setRecipients(array $recipients): void {
+		$this->recipients = $recipients;
+	}
+
+	/**
+	 * @return Recipient[]|null
+	 */
+	public function getRecipients(): ?array {
+		return $this->recipients;
 	}
 }

@@ -54,6 +54,22 @@ class RecipientMapper extends QBMapper {
 		return $this->findEntities($query);
 	}
 
+	/**
+	 *  @return Recipients[]
+	 */
+	public function findAllRecipients(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
+		$qb = $this->db->getQueryBuilder();
+
+		$query = $qb->select('*')
+			->from($this->getTableName())
+			->where(
+				$qb->expr()->in('message_id', $qb->createNamedParameter($messageIds, IQueryBuilder::PARAM_INT_ARRAY), IQueryBuilder::PARAM_INT_ARRAY),
+				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter($mailboxType, IQueryBuilder::PARAM_INT))
+			);
+
+		return $this->findEntities($query);
+	}
+
 	public function deleteForLocalMailbox(int $messageId): void {
 		$qb = $this->db->getQueryBuilder();
 

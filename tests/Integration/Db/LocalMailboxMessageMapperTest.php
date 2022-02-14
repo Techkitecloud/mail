@@ -53,6 +53,9 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	/** @var LocalMailboxMessage */
 	private $entity;
 
+	/** @var \OCA\Mail\Db\MailAccount */
+	private $acct;
+
 	protected function setUp(): void {
 		parent::setUp();
 
@@ -69,11 +72,11 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$delete->execute();
 
 
-		$acct = $this->createTestAccount();
+		$this->acct = $this->createTestAccount();
 
 		$message = new LocalMailboxMessage();
 		$message->setType(LocalMailboxMessage::OUTGOING);
-		$message->setAccountId($acct->getId());
+		$message->setAccountId($this->acct->getId());
 		$message->setAliasId(2);
 		$message->setSendAt(123);
 		$message->setSubject('subject');
@@ -89,17 +92,18 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$userdId = $this->getTestAccountUserId();
 		$result = $this->mapper->getAllForUser($userdId);
 		$this->assertCount(1, $result);
-
 		$row = $result[0];
 
-		$this->assertEquals(LocalMailboxMessage::OUTGOING, $row['type']);
-		$this->assertEquals(2, $row['alias_id']);
-		$this->assertEquals(123, $row['send_at']);
-		$this->assertEquals('subject', $row['subject']);
-		$this->assertEquals('message', $row['body']);
-		$this->assertEquals(100, $row['in_reply_to_id']);
-		$this->assertEquals(99, $row['draft_id']);
-		$this->assertTrue((bool)$row['html']);
+		$this->assertEquals(LocalMailboxMessage::OUTGOING, $row->getType());
+		$this->assertEquals(2, $row->getAliasId());
+		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals('subject', $row->getSubject());
+		$this->assertEquals('message', $row->getBody());
+		$this->assertEquals(100, $row->getInReplyToId());
+		$this->assertEquals(99, $row->getDraftId());
+		$this->assertTrue($row->isHtml());
+		$this->assertEmpty($row->getAttachments());
+		$this->assertEmpty($row->getRecipients());
 	}
 
 	/**
@@ -110,6 +114,5 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$userdId = $this->getTestAccountUserId();
 		$result = $this->mapper->getAllForUser($userdId);
 		$this->assertEmpty($result);
-
 	}
 }

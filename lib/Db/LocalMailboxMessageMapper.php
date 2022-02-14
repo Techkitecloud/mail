@@ -27,7 +27,6 @@ namespace OCA\Mail\Db;
 
 use OCP\DB\Exception as DBException;
 use function array_map;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
@@ -65,49 +64,69 @@ class LocalMailboxMessageMapper extends QBMapper {
 				$qb->expr()->eq('m.type', $qb->createNamedParameter(LocalMailboxMessage::OUTGOING, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
 		$rows = $qb->execute();
-		$result = $rows->fetchAll();
+
+		$results = [];
+		$ids = [];
+		while (($row = $rows->fetch()) !== false) {
+			$results[] = $this->mapRowToEntity($row);
+			$ids[] = $row['id'];
+		}
 		$rows->closeCursor();
-		return $result;
+
+		$attachments = $this->attachmentMapper->findAllForLocalMailbox($ids, $userId);
+		$recipients = $this->recipientMapper->findAllRecipients($ids);
+
+		return array_map(static function($entity) use ($attachments, $recipients) {
+			$entity->setAttachments(
+				array_map(static function($attachment) {
+					return LocalAttachment::fromRow(
+						array_filter($attachment, static function ($key) {
+							return $key !== 'local_message_id';
+						}, ARRAY_FILTER_USE_KEY)
+					);
+				}, array_filter($attachments, static function ($attachment) use ($entity) {
+					return $entity->getId() === $attachment['local_message_id'];
+				}))
+			);
+			$entity->setRecipients(
+				array_map(static function($recipient) {
+					return Recipient::fromRow(($recipient));
+				}, array_filter($recipients, static function ($recipient) use ($entity){
+					return $entity->getId() === $recipient['message_id'];
+				}))
+			);
+			return $entity;
+		}, $results);
 	}
 
-	/**
-	 * @throws DoesNotExistException
-	 */
-	public function find(int $id): LocalMailboxMessage {
+	public function find(int $id, string $userId): LocalMailboxMessage {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
 			->where(
 				$qb->expr()->in('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
-		return $this->findEntity($qb);
+		$entity = $this->findEntity($qb);
+		$entity->setAttachments($this->attachmentMapper->findForLocalMailboxMessage($id, $userId));
+		$entity->setRecipients($this->recipientMapper->findRecipients($id, Recipient::MAILBOX_TYPE_OUTBOX));
+		return $entity;
 	}
 
-	public function getRelatedData(int $id, string $userId): array {
-		$related = [];
-		$related['attachments'] = $this->attachmentMapper->findForLocalMailbox($id, $userId);
-		$related['recipients'] = $this->recipientMapper->findRecipients($id, Recipient::MAILBOX_TYPE_OUTBOX);
-		return $related;
-	}
-
-	/**
-	 * @throws DBException
-	 */
 	public function saveWithRelatedData(LocalMailboxMessage $message, array $to, array $cc, array $bcc, array $attachmentIds = []): void {
 		$this->insert($message);
-		// @TODO
-		// not that easy - this needs work to actually create the right recipient type in the DB!
+		// i hate this
 		array_map(function ($recipient) use ($message) {
-			$this->recipientMapper->createForLocalMailbox($message->getId(), $recipient['label'] ?? $recipient['email'], $recipient['email']);
-		}, array_merge($to, $cc, $bcc));
-		foreach ($attachmentIds as $attachmentId) {
-			$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentId);
-		}
+			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_TO, $recipient['label'] ?? $recipient['email'], $recipient['email']);
+		}, $to);
+		array_map(function ($recipient) use ($message) {
+			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_CC, $recipient['label'] ?? $recipient['email'], $recipient['email']);
+		}, $cc);
+		array_map(function ($recipient) use ($message) {
+			$this->recipientMapper->createForLocalMailbox($message->getId(), Recipient::TYPE_BCC, $recipient['label'] ?? $recipient['email'], $recipient['email']);
+		}, $bcc);
+		$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
 	}
 
-	/**
-	 * @throws DBException
-	 */
 	public function deleteWithRelated(LocalMailboxMessage $message): void {
 		$this->attachmentMapper->deleteForLocalMailbox($message->getId());
 		$this->recipientMapper->deleteForLocalMailbox($message->getId());
