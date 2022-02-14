@@ -27,11 +27,9 @@ namespace OCA\Mail\Tests\Integration\Db;
 
 use ChristophWurst\Nextcloud\Testing\DatabaseTransaction;
 use ChristophWurst\Nextcloud\Testing\TestCase;
-use OCA\Mail\Db\MailboxMapper;
 use OCA\Mail\Db\Recipient;
 use OCA\Mail\Db\RecipientMapper;
 use OCA\Mail\Tests\Integration\Framework\ImapTestAccount;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -161,14 +159,14 @@ class RecipientMapperTest extends TestCase {
 	/**
 	 * @depends testFindAllRecipientsEmpty
 	 */
-	public function testDeleteForLocalOutbox(): void {
-		$this->mapper->delete($this->outboxRecipient);
+	public function testDeleteForLocalMailbox(): void {
+		$this->mapper->deleteForLocalMailbox($this->inboxRecipient->getMessageId());
 		$result = $this->mapper->findRecipients($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertEmpty($result);
 	}
 
 	/**
-	 * @depends testDeleteForLocalOutbox
+	 * @depends testDeleteForLocalMailbox
 	 */
 	public function testCreateForLocalMailbox(): void {
 		$entity = $this->mapper->createForLocalMailbox(1, Recipient::TYPE_FROM, 'Penny', 'penny@stardewvalleylibrary.edu');

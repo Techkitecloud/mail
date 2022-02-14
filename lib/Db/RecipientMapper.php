@@ -78,9 +78,7 @@ class RecipientMapper extends QBMapper {
 				$qb->expr()->eq('message_id', $qb->createNamedParameter($messageId, IQueryBuilder::PARAM_INT)),
 				$qb->expr()->eq('mailbox_type', $qb->createNamedParameter(Recipient::MAILBOX_TYPE_OUTBOX, IQueryBuilder::PARAM_INT))
 			);
-
-		$result = $qb->execute();
-		$result->closeCursor();
+		$qb->execute();
 	}
 
 	public function createForLocalMailbox(int $messageId, int $type, string $label, string $email): Recipient {
