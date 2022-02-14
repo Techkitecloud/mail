@@ -109,7 +109,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	/**
 	 * @depends testFindAllForUser
 	 */
-	public function testDeleteForLocalOutbox(): void {
+	public function testDeleteWithRelated(): void {
 		$this->mapper->deleteWithRelated($this->entity);
 		$userdId = $this->getTestAccountUserId();
 		$result = $this->mapper->getAllForUser($userdId);

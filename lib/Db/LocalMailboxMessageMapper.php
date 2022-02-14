@@ -76,26 +76,23 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$attachments = $this->attachmentMapper->findAllForLocalMailbox($ids, $userId);
 		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_OUTBOX);
 
-		return array_map(static function ($entity) use ($attachments, $recipients) {
-			$entity->setAttachments(
-				array_map(static function ($attachment) {
-					return LocalAttachment::fromRow(
-						array_filter($attachment, static function ($key) {
-							return $key !== 'local_message_id';
-						}, ARRAY_FILTER_USE_KEY)
-					);
-				}, array_filter($attachments, static function ($attachment) use ($entity) {
-					return $entity->getId() === $attachment['local_message_id'];
-				}))
+		$recipientMap = [];
+		foreach ($recipients as $r) {
+			$recipientMap[$r->getMessageId()][] = $r;
+		}
+		$attachmentMap = [];
+		foreach ($attachments as $a) {
+			$attachmentMap[$a['local_message_id']][] = LocalAttachment::fromRow(
+				array_filter($a, static function ($key) {
+					return $key !== 'local_message_id';
+				}, ARRAY_FILTER_USE_KEY)
 			);
-			$entity->setRecipients(
-				array_map(static function ($recipient) {
-					return Recipient::fromRow(($recipient));
-				}, array_filter($recipients, static function ($recipient) use ($entity) {
-					return $entity->getId() === $recipient['message_id'];
-				}))
-			);
-			return $entity;
+		}
+
+		return array_map(static function ($localMessage) use ($attachmentMap, $recipientMap) {
+			$localMessage->setAttachments($attachmentMap[$localMessage->getId()] ?? []);
+			$localMessage->setRecipients($recipientMap[$localMessage->getId()] ?? []);
+			return $localMessage;
 		}, $results);
 	}
 
