@@ -41,7 +41,7 @@ class RecipientMapper extends QBMapper {
 	/**
 	 * @returns Recipient[]
 	 */
-	public function findRecipients(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
+	public function findByMessageId(int $messageId, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
@@ -57,7 +57,7 @@ class RecipientMapper extends QBMapper {
 	/**
 	 *  @return Recipient[]
 	 */
-	public function findAllRecipients(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
+	public function findByMessageIds(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
 		$qb = $this->db->getQueryBuilder();
 
 		$query = $qb->select('*')
@@ -81,7 +81,7 @@ class RecipientMapper extends QBMapper {
 		$qb->execute();
 	}
 
-	public function saveRecipients(int $messageId, array $recipients,int $type, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): void {
+	public function saveRecipients(int $messageId, array $recipients, int $type, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): void {
 		$qb = $this->db->getQueryBuilder();
 		$qb->insert($this->getTableName());
 		$qb->createParameter('type');
@@ -90,7 +90,7 @@ class RecipientMapper extends QBMapper {
 		$qb->createParameter('label');
 		$qb->createParameter('email');
 
-		foreach ($recipients as $recipient){
+		foreach ($recipients as $recipient) {
 			$qb->setParameter('type', $type, IQueryBuilder::PARAM_INT);
 			$qb->setParameter('message_id', $messageId, IQueryBuilder::PARAM_INT);
 			$qb->setParameter('mailbox_type', $mailboxType, IQueryBuilder::PARAM_INT);

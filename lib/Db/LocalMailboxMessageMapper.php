@@ -74,11 +74,11 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$rows->closeCursor();
 
 		$attachments = $this->attachmentMapper->findAllForLocalMailbox($ids, $userId);
-		$recipients = $this->recipientMapper->findAllRecipients($ids, Recipient::MAILBOX_TYPE_OUTBOX);
+		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_OUTBOX);
 
-		return array_map(static function($entity) use ($attachments, $recipients) {
+		return array_map(static function ($entity) use ($attachments, $recipients) {
 			$entity->setAttachments(
-				array_map(static function($attachment) {
+				array_map(static function ($attachment) {
 					return LocalAttachment::fromRow(
 						array_filter($attachment, static function ($key) {
 							return $key !== 'local_message_id';
@@ -89,9 +89,9 @@ class LocalMailboxMessageMapper extends QBMapper {
 				}))
 			);
 			$entity->setRecipients(
-				array_map(static function($recipient) {
+				array_map(static function ($recipient) {
 					return Recipient::fromRow(($recipient));
-				}, array_filter($recipients, static function ($recipient) use ($entity){
+				}, array_filter($recipients, static function ($recipient) use ($entity) {
 					return $entity->getId() === $recipient['message_id'];
 				}))
 			);
@@ -99,7 +99,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		}, $results);
 	}
 
-	public function find(int $id, string $userId): LocalMailboxMessage {
+	public function findById(int $id, string $userId): LocalMailboxMessage {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
@@ -108,7 +108,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			);
 		$entity = $this->findEntity($qb);
 		$entity->setAttachments($this->attachmentMapper->findForLocalMailboxMessage($id, $userId));
-		$entity->setRecipients($this->recipientMapper->findRecipients($id, Recipient::MAILBOX_TYPE_OUTBOX));
+		$entity->setRecipients($this->recipientMapper->findByMessageId($id, Recipient::MAILBOX_TYPE_OUTBOX));
 		return $entity;
 	}
 
@@ -120,11 +120,15 @@ class LocalMailboxMessageMapper extends QBMapper {
 		$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
 	}
 
-
-
 	public function deleteWithRelated(LocalMailboxMessage $message): void {
-		$this->attachmentMapper->deleteForLocalMailbox($message->getId());
-		$this->recipientMapper->deleteForLocalMailbox($message->getId());
-		$this->delete($message);
+		$this->db->beginTransaction();
+		try {
+			$this->attachmentMapper->deleteForLocalMailbox($message->getId());
+			$this->recipientMapper->deleteForLocalMailbox($message->getId());
+			$this->delete($message);
+		} catch (\Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 	}
 }

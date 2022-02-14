@@ -27,12 +27,10 @@ namespace OCA\Mail\Tests\Integration\Db;
 
 use ChristophWurst\Nextcloud\Testing\TestCase;
 use OCA\Mail\Db\Recipient;
-use OCP\AppFramework\Utility\ITimeFactory;
-use PHPUnit\Framework\MockObject\MockObject;
 
 class RecipientTest extends TestCase {
-
-	protected function setUp(): void {}
+	protected function setUp(): void {
+	}
 
 	public function testGettersSetters(): void {
 		$recipient = new Recipient();

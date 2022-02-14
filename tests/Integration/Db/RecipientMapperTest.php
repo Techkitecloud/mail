@@ -35,7 +35,6 @@ use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 
 class RecipientMapperTest extends TestCase {
-
 	use DatabaseTransaction;
 	use ImapTestAccount;
 
@@ -93,7 +92,7 @@ class RecipientMapperTest extends TestCase {
 	}
 
 	public function testFindRecipientsInbox(): void {
-		$result = $this->mapper->findRecipients(1);
+		$result = $this->mapper->findByMessageId(1);
 		$this->assertCount(1, $result);
 		/** @var Recipient $recipient */
 		$recipient = $result[0];
@@ -108,7 +107,7 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindRecipientsInbox
 	 */
 	public function testFindRecipientsOutbox(): void {
-		$result = $this->mapper->findRecipients(1, Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageId(1, Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertCount(1, $result);
 		/** @var Recipient $recipient */
 		$recipient = $result[0];
@@ -123,7 +122,7 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindRecipientsOutbox
 	 */
 	public function testFindAllRecipientsOutbox(): void {
-		$result = $this->mapper->findAllRecipients([1,2,789],Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageIds([1,2,789], Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertCount(1, $result);
 		/** @var Recipient $recipient */
 		$recipient = $result[0];
@@ -138,7 +137,7 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindAllRecipientsOutbox
 	 */
 	public function testFindAllRecipientsInbox(): void {
-		$result = $this->mapper->findAllRecipients([1,2,57842]);
+		$result = $this->mapper->findByMessageIds([1,2,57842]);
 		$this->assertCount(2, $result);
 		foreach ($result as $r) {
 			$this->assertEquals(Recipient::MAILBOX_TYPE_INBOX, $r->getMailboxType());
@@ -149,10 +148,10 @@ class RecipientMapperTest extends TestCase {
 	 * @depends testFindAllRecipientsInbox
 	 */
 	public function testFindAllRecipientsEmpty(): void {
-		$result = $this->mapper->findAllRecipients([12,57842], Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageIds([12,57842], Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertEmpty($result);
 
-		$result = $this->mapper->findAllRecipients([12,57842]);
+		$result = $this->mapper->findByMessageIds([12,57842]);
 		$this->assertEmpty($result);
 	}
 
@@ -161,7 +160,7 @@ class RecipientMapperTest extends TestCase {
 	 */
 	public function testDeleteForLocalMailbox(): void {
 		$this->mapper->deleteForLocalMailbox($this->inboxRecipient->getMessageId());
-		$result = $this->mapper->findRecipients($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_OUTBOX);
+		$result = $this->mapper->findByMessageId($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertEmpty($result);
 	}
 
@@ -171,9 +170,10 @@ class RecipientMapperTest extends TestCase {
 	public function testSaveRecipients(): void {
 		$this->mapper->saveRecipients(3, [['label' => 'Penny', 'email' => 'penny@stardewvalleylibrary.edu']], Recipient::TYPE_FROM, Recipient::MAILBOX_TYPE_OUTBOX);
 
-		$results = $this->mapper->findRecipients(3, Recipient::MAILBOX_TYPE_OUTBOX);
+		$results = $this->mapper->findByMessageId(3, Recipient::MAILBOX_TYPE_OUTBOX);
 		$this->assertCount(1, $results);
 
+		/** @var Recipient $entity */
 		$entity = $results[0];
 		$this->assertEquals(1, $entity->getMessageId());
 		$this->assertEquals(Recipient::TYPE_FROM, $entity->getType());

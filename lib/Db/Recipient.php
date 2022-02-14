@@ -53,7 +53,10 @@ class Recipient extends Entity implements JsonSerializable {
 	/** @var int */
 	protected $messageId;
 
-	/** @var int */
+	/**
+	 * @var int
+	 * @psalm-var self::TYPE_*
+	 */
 	protected $type;
 
 	/** @var int */
