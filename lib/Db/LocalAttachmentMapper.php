@@ -48,7 +48,7 @@ class LocalAttachmentMapper extends QBMapper {
 	/**
 	 * @return LocalAttachment[]
 	 */
-	public function findForLocalMailboxMessage(int $localMessageId, string $userId): array {
+	public function findByLocalMailboxMessageId(int $localMessageId, string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('a.*')
 			->from('mail_lcl_mbx_attchmts', 'm')
@@ -60,7 +60,7 @@ class LocalAttachmentMapper extends QBMapper {
 		return $this->findEntities($qb);
 	}
 
-	public function findAllForLocalMailbox(array $localMessageIds, string $userId): array {
+	public function findByLocalMailboxMessageIds(array $localMessageIds, string $userId): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('a.*', 'm.local_message_id')
 			->from('mail_lcl_mbx_attchmts', 'm')

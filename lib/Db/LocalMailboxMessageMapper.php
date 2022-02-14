@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Mail\Db;
 
 use OCP\DB\Exception as DBException;
+use Throwable;
 use function array_map;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -73,7 +74,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 		}
 		$rows->closeCursor();
 
-		$attachments = $this->attachmentMapper->findAllForLocalMailbox($ids, $userId);
+		$attachments = $this->attachmentMapper->findByLocalMailboxMessageIds($ids, $userId);
 		$recipients = $this->recipientMapper->findByMessageIds($ids, Recipient::MAILBOX_TYPE_OUTBOX);
 
 		$recipientMap = [];
@@ -104,17 +105,25 @@ class LocalMailboxMessageMapper extends QBMapper {
 				$qb->expr()->in('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
 		$entity = $this->findEntity($qb);
-		$entity->setAttachments($this->attachmentMapper->findForLocalMailboxMessage($id, $userId));
+		$entity->setAttachments($this->attachmentMapper->findByLocalMailboxMessageId($id, $userId));
 		$entity->setRecipients($this->recipientMapper->findByMessageId($id, Recipient::MAILBOX_TYPE_OUTBOX));
 		return $entity;
 	}
 
 	public function saveWithRelatedData(LocalMailboxMessage $message, array $to, array $cc, array $bcc, array $attachmentIds = []): void {
-		$this->insert($message);
-		$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_OUTBOX);
-		$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_OUTBOX);
-		$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_OUTBOX);
-		$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
+		$this->db->beginTransaction();
+		try {
+			$message = $this->insert($message);
+			$this->recipientMapper->saveRecipients($message->getId(), $to, Recipient::TYPE_TO, Recipient::MAILBOX_TYPE_OUTBOX);
+			$this->recipientMapper->saveRecipients($message->getId(), $cc, Recipient::TYPE_CC, Recipient::MAILBOX_TYPE_OUTBOX);
+			$this->recipientMapper->saveRecipients($message->getId(), $bcc, Recipient::TYPE_BCC, Recipient::MAILBOX_TYPE_OUTBOX);
+			if (!empty($attachmentIds)) {
+				$this->attachmentMapper->linkAttachmentToMessage($message->getId(), $attachmentIds);
+			}
+		} catch (Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
 	}
 
 	public function deleteWithRelated(LocalMailboxMessage $message): void {
@@ -123,7 +132,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			$this->attachmentMapper->deleteForLocalMailbox($message->getId());
 			$this->recipientMapper->deleteForLocalMailbox($message->getId());
 			$this->delete($message);
-		} catch (\Throwable $e) {
+		} catch (Throwable $e) {
 			$this->db->rollBack();
 			throw $e;
 		}

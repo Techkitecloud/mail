@@ -30,9 +30,9 @@ use ChristophWurst\Nextcloud\Testing\TestCase;
 use OCA\Mail\Db\LocalAttachmentMapper;
 use OCA\Mail\Db\LocalMailboxMessage;
 use OCA\Mail\Db\LocalMailboxMessageMapper;
-use OCA\Mail\Db\MailboxMapper;
 use OCA\Mail\Db\RecipientMapper;
 use OCA\Mail\Tests\Integration\Framework\ImapTestAccount;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -44,7 +44,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	/** @var IDBConnection */
 	private $db;
 
-	/** @var MailboxMapper */
+	/** @var LocalMailboxMessageMapper */
 	private $mapper;
 
 	/** @var ITimeFactory| MockObject */
@@ -60,17 +60,18 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		parent::setUp();
 
 		$this->db = \OC::$server->getDatabaseConnection();
+		$recipientMapper = new RecipientMapper(
+			$this->db
+		);
 		$this->mapper = new LocalMailboxMessageMapper(
 			$this->db,
 			$this->createMock(LocalAttachmentMapper::class),
-			$this->createMock(RecipientMapper::class)
+			$recipientMapper
 		);
 
 		$qb = $this->db->getQueryBuilder();
-
 		$delete = $qb->delete($this->mapper->getTableName());
 		$delete->execute();
-
 
 		$this->acct = $this->createTestAccount();
 
@@ -84,16 +85,14 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$message->setHtml(true);
 		$message->setInReplyToId(100);
 		$message->setDraftId(99);
-
 		$this->entity = $this->mapper->insert($message);
 	}
 
 	public function testFindAllForUser(): void {
-		$userdId = $this->getTestAccountUserId();
-		$result = $this->mapper->getAllForUser($userdId);
+		$result = $this->mapper->getAllForUser($this->getTestAccountUserId());
+
 		$this->assertCount(1, $result);
 		$row = $result[0];
-
 		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
 		$this->assertEquals(2, $row->getAliasId());
 		$this->assertEquals($this->acct->getId(), $row->getAccountId());
@@ -109,10 +108,68 @@ class LocalMailboxMessageMapperTest extends TestCase {
 	/**
 	 * @depends testFindAllForUser
 	 */
+	public function testFindById(): void {
+		$row = $this->mapper->findById($this->entity->getId(), $this->acct->getUserId());
+
+		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
+		$this->assertEquals(2, $row->getAliasId());
+		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals('subject', $row->getSubject());
+		$this->assertEquals('message', $row->getBody());
+		$this->assertEquals(100, $row->getInReplyToId());
+		$this->assertEquals(99, $row->getDraftId());
+		$this->assertTrue($row->isHtml());
+		$this->assertEmpty($row->getAttachments());
+		$this->assertEmpty($row->getRecipients());
+	}
+
+	public function testFindByIdNotFound(): void {
+		$this->expectException(DoesNotExistException::class);
+		$this->mapper->findById(1337, $this->acct->getUserId());
+	}
+
+	/**
+	 * @depends testFindById
+	 */
 	public function testDeleteWithRelated(): void {
 		$this->mapper->deleteWithRelated($this->entity);
-		$userdId = $this->getTestAccountUserId();
-		$result = $this->mapper->getAllForUser($userdId);
+
+		$result = $this->mapper->getAllForUser($this->getTestAccountUserId());
+
 		$this->assertEmpty($result);
+	}
+
+	public function testSaveWithRelatedData(): void {
+		// cleanup
+		$qb = $this->db->getQueryBuilder();
+		$delete = $qb->delete($this->mapper->getTableName());
+		$delete->execute();
+
+		$message = new LocalMailboxMessage();
+		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
+		$message->setAccountId($this->acct->getId());
+		$message->setAliasId(3);
+		$message->setSendAt(3);
+		$message->setSubject('savedWithRelated');
+		$message->setBody('message');
+		$message->setHtml(true);
+		$message->setInReplyToId(1010);
+		$message->setDraftId(999);
+		$to = [['label' => 'M. Rasmodeus', 'email' => 'wizard@stardew-valley.com']];
+
+		$this->mapper->saveWithRelatedData($message, $to, [], []);
+
+		$results = $this->mapper->getAllForUser($this->acct->getUserId());
+		$row = $results[0];
+		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
+		$this->assertEquals(3, $row->getAliasId());
+		$this->assertEquals($this->acct->getId(), $row->getAccountId());
+		$this->assertEquals('savedWithRelated', $row->getSubject());
+		$this->assertEquals('message', $row->getBody());
+		$this->assertEquals(1010, $row->getInReplyToId());
+		$this->assertEquals(999, $row->getDraftId());
+		$this->assertTrue($row->isHtml());
+		$this->assertEmpty($row->getAttachments());
+		$this->assertCount(1, $row->getRecipients());
 	}
 }
