@@ -61,7 +61,7 @@ class LocalMailboxMessageMapper extends QBMapper {
 			->join('a', $this->getTableName(), 'm', $qb->expr()->eq('m.account_id', 'a.id'))
 			->where(
 				$qb->expr()->eq('a.user_id', $qb->createNamedParameter($userId, IQueryBuilder::PARAM_STR), IQueryBuilder::PARAM_STR),
-				$qb->expr()->eq('m.type', $qb->createNamedParameter(LocalMailboxMessage::OUTGOING, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
+				$qb->expr()->eq('m.type', $qb->createNamedParameter(LocalMailboxMessage::TYPE_OUTGOING, IQueryBuilder::PARAM_INT), IQueryBuilder::PARAM_INT)
 			);
 		$rows = $qb->execute();
 

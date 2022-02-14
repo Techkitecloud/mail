@@ -43,7 +43,7 @@ class LocalMailboxMessageTest extends TestCase {
 		$time = $this->timeFactory->getTime();
 		$message = new LocalMailboxMessage();
 
-		$message->setType(LocalMailboxMessage::OUTGOING);
+		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
 		$message->setAccountId(1);
 		$message->setAliasId(2);
 		$message->setSendAt($time);
@@ -53,7 +53,7 @@ class LocalMailboxMessageTest extends TestCase {
 		$message->setInReplyToId(100);
 		$message->setDraftId(99);
 
-		$this->assertEquals(LocalMailboxMessage::OUTGOING, $message->getType());
+		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $message->getType());
 		$this->assertEquals(1, $message->getAccountId());
 		$this->assertEquals(2, $message->getAliasId());
 		$this->assertEquals($time, $message->getSendAt());

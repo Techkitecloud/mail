@@ -50,7 +50,10 @@ use OCP\AppFramework\Db\Entity;
  */
 class LocalMailboxMessage extends Entity implements JsonSerializable {
 
-	/** @var int */
+	/**
+	 * @var int
+	 * @psalm-var self::TYPE_*
+	 */
 	protected $type;
 
 	/** @var int */
@@ -83,8 +86,8 @@ class LocalMailboxMessage extends Entity implements JsonSerializable {
 	/** @var array|null */
 	protected $recipients;
 
-	public const OUTGOING = 0;
-	public const DRAFT = 1;
+	public const TYPE_OUTGOING = 0;
+	public const TYPE_DRAFT = 1;
 
 	public function __construct() {
 		$this->addType('type', 'integer');

@@ -75,7 +75,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$this->acct = $this->createTestAccount();
 
 		$message = new LocalMailboxMessage();
-		$message->setType(LocalMailboxMessage::OUTGOING);
+		$message->setType(LocalMailboxMessage::TYPE_OUTGOING);
 		$message->setAccountId($this->acct->getId());
 		$message->setAliasId(2);
 		$message->setSendAt(123);
@@ -94,7 +94,7 @@ class LocalMailboxMessageMapperTest extends TestCase {
 		$this->assertCount(1, $result);
 		$row = $result[0];
 
-		$this->assertEquals(LocalMailboxMessage::OUTGOING, $row->getType());
+		$this->assertEquals(LocalMailboxMessage::TYPE_OUTGOING, $row->getType());
 		$this->assertEquals(2, $row->getAliasId());
 		$this->assertEquals($this->acct->getId(), $row->getAccountId());
 		$this->assertEquals('subject', $row->getSubject());
