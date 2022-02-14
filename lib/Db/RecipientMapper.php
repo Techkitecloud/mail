@@ -55,7 +55,7 @@ class RecipientMapper extends QBMapper {
 	}
 
 	/**
-	 *  @return Recipients[]
+	 *  @return Recipient[]
 	 */
 	public function findAllRecipients(array $messageIds, int $mailboxType = Recipient::MAILBOX_TYPE_INBOX): array {
 		$qb = $this->db->getQueryBuilder();

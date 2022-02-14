@@ -31,6 +31,7 @@ use OCA\Mail\Db\MailboxMapper;
 use OCA\Mail\Db\Recipient;
 use OCA\Mail\Db\RecipientMapper;
 use OCA\Mail\Tests\Integration\Framework\ImapTestAccount;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -43,14 +44,17 @@ class RecipientMapperTest extends TestCase {
 	/** @var IDBConnection */
 	private $db;
 
-	/** @var MailboxMapper */
+	/** @var RecipientMapper */
 	private $mapper;
 
 	/** @var ITimeFactory| MockObject */
 	private $timeFactory;
 
 	/** @var Recipient */
-	private $entity;
+	private $inboxRecipient;
+
+	/** @var Recipient */
+	private $outboxRecipient;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -64,5 +68,115 @@ class RecipientMapperTest extends TestCase {
 
 		$delete = $qb->delete($this->mapper->getTableName());
 		$delete->execute();
+
+		$this->outboxRecipient = new Recipient();
+		$this->outboxRecipient->setMessageId(1);
+		$this->outboxRecipient->setEmail('doc@stardew-clinic.com');
+		$this->outboxRecipient->setType(Recipient::TYPE_TO);
+		$this->outboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->outboxRecipient->setLabel('Dr. Harvey');
+		$this->mapper->insert($this->outboxRecipient);
+
+		$this->inboxRecipient = new Recipient();
+		$this->inboxRecipient->setMessageId(1);
+		$this->inboxRecipient->setEmail('wizard@stardewvalley.com');
+		$this->inboxRecipient->setType(Recipient::TYPE_TO);
+		$this->inboxRecipient->setMailboxType(Recipient::MAILBOX_TYPE_INBOX);
+		$this->inboxRecipient->setLabel('M. Rasmodius');
+		$this->mapper->insert($this->inboxRecipient);
+
+		$inboxRecipientTwo = new Recipient();
+		$inboxRecipientTwo->setMessageId(2);
+		$inboxRecipientTwo->setEmail('pierre@stardewvalley.com');
+		$inboxRecipientTwo->setType(Recipient::TYPE_CC);
+		$inboxRecipientTwo->setMailboxType(Recipient::MAILBOX_TYPE_INBOX);
+		$inboxRecipientTwo->setLabel("Pierre's General Store");
+		$this->mapper->insert($inboxRecipientTwo);
+	}
+
+	public function testFindRecipientsInbox(): void {
+		$result = $this->mapper->findRecipients(1);
+		$this->assertCount(1, $result);
+		/** @var Recipient $recipient */
+		$recipient = $result[0];
+		$this->assertEquals(1, $recipient->getMessageId());
+		$this->assertEquals('wizard@stardewvalley.com', $recipient->getEmail());
+		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_INBOX, $recipient->getMailboxType());
+		$this->assertEquals('M. Rasmodius', $recipient->getLabel());
+	}
+
+	/**
+	 * @depends testFindRecipientsInbox
+	 */
+	public function testFindRecipientsOutbox(): void {
+		$result = $this->mapper->findRecipients(1, Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->assertCount(1, $result);
+		/** @var Recipient $recipient */
+		$recipient = $result[0];
+		$this->assertEquals(1, $recipient->getMessageId());
+		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
+		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
+		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
+	}
+
+	/**
+	 * @depends testFindRecipientsOutbox
+	 */
+	public function testFindAllRecipientsOutbox(): void {
+		$result = $this->mapper->findAllRecipients([1,2,789],Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->assertCount(1, $result);
+		/** @var Recipient $recipient */
+		$recipient = $result[0];
+		$this->assertEquals(1, $recipient->getMessageId());
+		$this->assertEquals('doc@stardew-clinic.com', $recipient->getEmail());
+		$this->assertEquals(Recipient::TYPE_TO, $recipient->getType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $recipient->getMailboxType());
+		$this->assertEquals('Dr. Harvey', $recipient->getLabel());
+	}
+
+	/**
+	 * @depends testFindAllRecipientsOutbox
+	 */
+	public function testFindAllRecipientsInbox(): void {
+		$result = $this->mapper->findAllRecipients([1,2,57842]);
+		$this->assertCount(2, $result);
+		foreach ($result as $r) {
+			$this->assertEquals(Recipient::MAILBOX_TYPE_INBOX, $r->getMailboxType());
+		}
+	}
+
+	/**
+	 * @depends testFindAllRecipientsInbox
+	 */
+	public function testFindAllRecipientsEmpty(): void {
+		$result = $this->mapper->findAllRecipients([12,57842], Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->assertEmpty($result);
+
+		$result = $this->mapper->findAllRecipients([12,57842]);
+		$this->assertEmpty($result);
+	}
+
+	/**
+	 * @depends testFindAllRecipientsEmpty
+	 */
+	public function testDeleteForLocalOutbox(): void {
+		$this->mapper->delete($this->outboxRecipient);
+		$result = $this->mapper->findRecipients($this->inboxRecipient->getMessageId(), Recipient::MAILBOX_TYPE_OUTBOX);
+		$this->assertEmpty($result);
+	}
+
+	/**
+	 * @depends testDeleteForLocalOutbox
+	 */
+	public function testCreateForLocalMailbox(): void {
+		$entity = $this->mapper->createForLocalMailbox(1, Recipient::TYPE_FROM, 'Penny', 'penny@stardewvalleylibrary.edu');
+		$this->assertIsInt($entity->getId());
+		$this->assertEquals(1, $entity->getMessageId());
+		$this->assertEquals(Recipient::TYPE_FROM, $entity->getType());
+		$this->assertEquals(Recipient::MAILBOX_TYPE_OUTBOX, $entity->getMailboxType());
+		$this->assertEquals('Penny', $entity->getLabel());
+		$this->assertEquals('penny@stardewvalleylibrary.edu', $entity->getEmail());
 	}
 }
