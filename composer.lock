@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "644a61f389e95e8416af0e7f7badda5b",
+    "content-hash": "862162475ebf0551a843bfdc7d8324fb",
     "packages": [
         {
             "name": "amphp/amp",
@@ -39,13 +39,13 @@
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Amp\\": "lib"
-                },
                 "files": [
                     "lib/functions.php",
                     "lib/Internal/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\": "lib"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -123,12 +123,12 @@
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Amp\\ByteStream\\": "lib"
-                },
                 "files": [
                     "lib/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\ByteStream\\": "lib"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -192,14 +192,14 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Amp\\Parallel\\": "lib"
-                },
                 "files": [
                     "lib/Context/functions.php",
                     "lib/Sync/functions.php",
                     "lib/Worker/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\Parallel\\": "lib"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -309,12 +309,12 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Amp\\Process\\": "lib"
-                },
                 "files": [
                     "lib/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\Process\\": "lib"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -367,12 +367,12 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Amp\\Serialization\\": "src"
-                },
                 "files": [
                     "src/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\Serialization\\": "src"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -423,13 +423,13 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Amp\\Sync\\": "src"
-                },
                 "files": [
                     "src/functions.php",
                     "src/ConcurrentIterator/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Amp\\Sync\\": "src"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -563,16 +563,16 @@
         },
         {
             "name": "cerdic/css-tidy",
-            "version": "v2.0.0",
+            "version": "v2.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Cerdic/CSSTidy.git",
-                "reference": "3eaaedd862563bbaa8f85606cfda65c8f6ad513b"
+                "reference": "436c69db9e0951760ca54b6b123d61c89ab3e918"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Cerdic/CSSTidy/zipball/3eaaedd862563bbaa8f85606cfda65c8f6ad513b",
-                "reference": "3eaaedd862563bbaa8f85606cfda65c8f6ad513b",
+                "url": "https://api.github.com/repos/Cerdic/CSSTidy/zipball/436c69db9e0951760ca54b6b123d61c89ab3e918",
+                "reference": "436c69db9e0951760ca54b6b123d61c89ab3e918",
                 "shasum": ""
             },
             "require": {
@@ -604,7 +604,7 @@
                 }
             ],
             "description": "CSSTidy is a CSS minifier",
-            "time": "2022-01-10T15:58:08+00:00"
+            "time": "2022-09-14T13:26:35+00:00"
         },
         {
             "name": "christophwurst/kitinerary",
@@ -776,12 +776,12 @@
             },
             "type": "library",
             "autoload": {
-                "psr-0": {
-                    "HTMLPurifier": "library/"
-                },
                 "files": [
                     "library/HTMLPurifier.composer.php"
                 ],
+                "psr-0": {
+                    "HTMLPurifier": "library/"
+                },
                 "exclude-from-classmap": [
                     "/library/HTMLPurifier/Language/"
                 ]
@@ -1202,7 +1202,7 @@
             "license": [
                 "BSD-2-Clause"
             ],
-            "description": "Provides interfaces for sending e-mail messages and parsing e-mail addresses."
+            "description": "A library that provides interfaces for sending e-mail messages and parsing e-mail addresses."
         },
         {
             "name": "pear-pear.horde.org/Horde_ManageSieve",
@@ -1444,7 +1444,7 @@
             "license": [
                 "LGPL-2.1"
             ],
-            "description": "A collection of various stream filters."
+            "description": "A library of various stream filters."
         },
         {
             "name": "pear-pear.horde.org/Horde_Stream_Wrapper",
@@ -1738,13 +1738,13 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Rubix\\ML\\": "src/"
-                },
                 "files": [
                     "src/constants.php",
                     "src/functions.php"
-                ]
+                ],
+                "psr-4": {
+                    "Rubix\\ML\\": "src/"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -1879,14 +1879,14 @@
             },
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "Tensor\\": "src/",
-                    "JAMA\\": "lib/JAMA",
-                    "Zephir\\Optimizers\\FunctionCall\\": "optimizers/"
-                },
                 "files": [
                     "src/constants.php"
-                ]
+                ],
+                "psr-4": {
+                    "JAMA\\": "lib/JAMA",
+                    "Tensor\\": "src/",
+                    "Zephir\\Optimizers\\FunctionCall\\": "optimizers/"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -2036,12 +2036,12 @@
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Symfony\\Polyfill\\Mbstring\\": ""
-                },
                 "files": [
                     "bootstrap.php"
-                ]
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Mbstring\\": ""
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -2110,12 +2110,12 @@
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Symfony\\Polyfill\\Php73\\": ""
-                },
                 "files": [
                     "bootstrap.php"
                 ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php73\\": ""
+                },
                 "classmap": [
                     "Resources/stubs"
                 ]
@@ -2186,12 +2186,12 @@
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "Symfony\\Polyfill\\Php80\\": ""
-                },
                 "files": [
                     "bootstrap.php"
                 ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php80\\": ""
+                },
                 "classmap": [
                     "Resources/stubs"
                 ]
